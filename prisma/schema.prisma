@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user") // "admin" or "user"
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites     Favorite[]
+  watchProgress WatchProgress[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  movies MovieCategory[]
+}
+
+model Movie {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  thumbnail   String
+  videoUrl    String
+  bannerUrl   String?
+  year        Int?
+  duration    String?
+  rating      Float?   @default(0)
+  featured    Boolean  @default(false)
+  status      String   @default("active") // "active", "draft", "inactive"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categories    MovieCategory[]
+  favorites     Favorite[]
+  watchProgress WatchProgress[]
+  analytics     MovieAnalytics[]
+}
+
+model MovieCategory {
+  movie      Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movieId    String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@id([movieId, categoryId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movieId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, movieId])
+}
+
+model WatchProgress {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movieId   String
+  progress  Float    @default(0) // percentage 0-100
+  timestamp Float    @default(0) // seconds
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, movieId])
+}
+
+model MovieAnalytics {
+  id        String   @id @default(cuid())
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movieId   String
+  eventType String   // "watch_start", "watch_complete", "view"
+  createdAt DateTime @default(now())
+}
+
+model SiteSettings {
+  id          String @id @default("main")
+  siteName    String @default("Dorama Flix")
+  siteTagline String @default("Filmes e Séries Asiáticas")
+  logoUrl     String?
+  heroTitle   String?
+  heroSubtitle String?
+  primaryColor String @default("#e50914")
+  updatedAt   DateTime @updatedAt
+}
