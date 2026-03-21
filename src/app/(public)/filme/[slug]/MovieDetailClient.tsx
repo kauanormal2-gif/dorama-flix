@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Play,
@@ -9,6 +9,7 @@ import {
   Star,
   Calendar,
   Clock,
+  RotateCcw,
 } from "lucide-react";
 import MovieRow from "@/components/MovieRow";
 
@@ -31,14 +32,130 @@ interface Props {
   related: Movie[];
 }
 
+interface ProgressData {
+  timestamp: number;
+  progress: number;
+  completed: boolean;
+  title: string;
+  thumbnail: string;
+  lastWatched: string;
+}
+
+const PROGRESS_KEY = "doramaflix_progress";
+
+function getProgress(slug: string): ProgressData | null {
+  try {
+    const all = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+    return all[slug] || null;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress(slug: string, data: ProgressData) {
+  try {
+    const all = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+    all[slug] = data;
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
+  } catch {}
+}
+
+function isDriveUrl(url: string) {
+  return url.includes("drive.google.com");
+}
+
 export default function MovieDetailClient({ movie, related }: Props) {
   const [playing, setPlaying] = useState(false);
   const [favorited, setFavorited] = useState(false);
+  const [savedProgress, setSavedProgress] = useState<ProgressData | null>(null);
+  const [resumeFrom, setResumeFrom] = useState<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const toggleFavorite = async () => {
-    setFavorited(!favorited);
-    // TODO: API call to toggle favorite
+  const isdriveVideo = isDriveUrl(movie.videoUrl);
+
+  useEffect(() => {
+    const progress = getProgress(movie.slug);
+    if (progress && !progress.completed && progress.timestamp > 5) {
+      setSavedProgress(progress);
+    }
+  }, [movie.slug]);
+
+  const startWatching = (fromBeginning = false) => {
+    if (fromBeginning) {
+      setResumeFrom(0);
+    } else if (savedProgress) {
+      setResumeFrom(savedProgress.timestamp);
+    } else {
+      setResumeFrom(null);
+    }
+    setPlaying(true);
   };
+
+  const handleVideoReady = () => {
+    if (videoRef.current && resumeFrom && resumeFrom > 0) {
+      videoRef.current.currentTime = resumeFrom;
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video || video.duration === 0) return;
+
+    const progress = (video.currentTime / video.duration) * 100;
+    const completed = progress >= 90;
+
+    saveProgress(movie.slug, {
+      timestamp: video.currentTime,
+      progress,
+      completed,
+      title: movie.title,
+      thumbnail: movie.thumbnail,
+      lastWatched: new Date().toISOString(),
+    });
+  };
+
+  const handleDrivePlay = () => {
+    // For Drive videos, just mark as started
+    const existing = getProgress(movie.slug);
+    if (!existing || existing.completed) {
+      saveProgress(movie.slug, {
+        timestamp: 0,
+        progress: 5,
+        completed: false,
+        title: movie.title,
+        thumbnail: movie.thumbnail,
+        lastWatched: new Date().toISOString(),
+      });
+    }
+    setPlaying(true);
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !playing || isdriveVideo) return;
+
+    video.addEventListener("loadedmetadata", handleVideoReady);
+    saveIntervalRef.current = setInterval(handleTimeUpdate, 5000);
+
+    const handleEnded = () => {
+      saveProgress(movie.slug, {
+        timestamp: video.duration,
+        progress: 100,
+        completed: true,
+        title: movie.title,
+        thumbnail: movie.thumbnail,
+        lastWatched: new Date().toISOString(),
+      });
+    };
+    video.addEventListener("ended", handleEnded);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleVideoReady);
+      video.removeEventListener("ended", handleEnded);
+      if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
+    };
+  }, [playing]);
 
   const bgImage = movie.bannerUrl || movie.thumbnail;
 
@@ -56,12 +173,23 @@ export default function MovieDetailClient({ movie, related }: Props) {
               Voltar
             </button>
           </div>
-          <video
-            src={movie.videoUrl}
-            className="w-full h-full"
-            controls
-            autoPlay
-          />
+
+          {isdriveVideo ? (
+            <iframe
+              src={movie.videoUrl}
+              className="w-full h-full"
+              allow="autoplay"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={movie.videoUrl}
+              className="w-full h-full"
+              controls
+              autoPlay
+            />
+          )}
         </div>
       ) : (
         /* Movie Detail */
@@ -136,31 +264,64 @@ export default function MovieDetailClient({ movie, related }: Props) {
                     )}
                   </div>
 
+                  {/* Progress bar */}
+                  {savedProgress && (
+                    <div className="mb-4">
+                      <div className="w-full max-w-xs bg-white/20 rounded-full h-1 mb-1">
+                        <div
+                          className="bg-primary h-1 rounded-full"
+                          style={{ width: `${Math.min(savedProgress.progress, 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-gray-400 text-xs">
+                        {Math.round(savedProgress.progress)}% assistido
+                      </p>
+                    </div>
+                  )}
+
                   <p className="text-gray-300 text-sm md:text-base mb-6 max-w-2xl line-clamp-4">
                     {movie.description}
                   </p>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {savedProgress ? (
+                      <>
+                        <button
+                          onClick={() => startWatching(false)}
+                          className="flex items-center gap-2 bg-primary hover:bg-primary-hover px-8 py-3 rounded-full font-semibold transition"
+                        >
+                          <Play size={18} fill="white" />
+                          Continuar
+                        </button>
+                        <button
+                          onClick={() => startWatching(true)}
+                          className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-3 rounded-full font-semibold transition text-sm"
+                        >
+                          <RotateCcw size={16} />
+                          Recomeçar
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          isdriveVideo ? handleDrivePlay() : startWatching()
+                        }
+                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover px-8 py-3 rounded-full font-semibold transition"
+                      >
+                        <Play size={18} fill="white" />
+                        Assistir Agora
+                      </button>
+                    )}
                     <button
-                      onClick={() => setPlaying(true)}
-                      className="flex items-center gap-2 bg-primary hover:bg-primary-hover px-8 py-3 rounded-full font-semibold transition"
-                    >
-                      <Play size={18} fill="white" />
-                      Assistir Agora
-                    </button>
-                    <button
-                      onClick={toggleFavorite}
+                      onClick={() => setFavorited(!favorited)}
                       className={`p-3 rounded-full transition ${
                         favorited
                           ? "bg-primary text-white"
                           : "bg-white/20 hover:bg-white/30"
                       }`}
                     >
-                      <Heart
-                        size={18}
-                        fill={favorited ? "white" : "none"}
-                      />
+                      <Heart size={18} fill={favorited ? "white" : "none"} />
                     </button>
                   </div>
                 </div>

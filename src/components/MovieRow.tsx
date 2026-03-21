@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import MovieCard from "./MovieCard";
 
@@ -17,9 +17,26 @@ interface Movie {
 interface MovieRowProps {
   title: string;
   movies: Movie[];
+  showProgress?: boolean;
+  dimmed?: boolean;
 }
 
-export default function MovieRow({ title, movies }: MovieRowProps) {
+const PROGRESS_KEY = "doramaflix_progress";
+
+export default function MovieRow({ title, movies, showProgress, dimmed }: MovieRowProps) {
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!showProgress && !dimmed) return;
+    try {
+      const all = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+      const map: Record<string, number> = {};
+      for (const [slug, data] of Object.entries(all as Record<string, { progress: number }>)) {
+        map[slug] = data.progress;
+      }
+      setProgressMap(map);
+    } catch {}
+  }, [showProgress, dimmed]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -56,11 +73,15 @@ export default function MovieRow({ title, movies }: MovieRowProps) {
         {/* Movie list */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide px-4 md:px-0 pb-2"
+          className={`flex gap-3 overflow-x-auto scrollbar-hide px-4 md:px-0 pb-2 ${dimmed ? "opacity-60" : ""}`}
           style={{ scrollbarWidth: "none" }}
         >
           {movies.map((movie) => (
-            <MovieCard key={movie.id} {...movie} />
+            <MovieCard
+              key={movie.id}
+              {...movie}
+              progress={showProgress || dimmed ? progressMap[movie.slug] : undefined}
+            />
           ))}
         </div>
       </div>

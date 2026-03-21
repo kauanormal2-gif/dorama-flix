@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Save, ArrowLeft } from "lucide-react";
+import { Save, ArrowLeft, Upload, X, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 
 interface Category {
@@ -25,11 +25,24 @@ interface MovieData {
   categories?: { categoryId: string }[];
 }
 
+function getDriveEmbedUrl(url: string): string | null {
+  const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+  const match2 = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (match2) return `https://drive.google.com/file/d/${match2[1]}/preview`;
+  return null;
+}
+
 export default function MovieForm({ movie }: { movie?: MovieData }) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">(
+    movie?.thumbnail ? "url" : "upload"
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     title: movie?.title || "",
@@ -51,21 +64,45 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
       .then((d) => setCategories(d.categories || []));
   }, []);
 
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error || "Erro ao fazer upload da imagem");
+        return;
+      }
+      const { url } = await res.json();
+      setForm((prev) => ({ ...prev, thumbnail: url }));
+    } catch {
+      setError("Erro ao fazer upload. Tente usar URL.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const driveEmbed = getDriveEmbedUrl(form.videoUrl);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSaving(true);
 
     try {
-      const url = movie?.id
-        ? `/api/admin/movies/${movie.id}`
-        : "/api/admin/movies";
+      // Auto-convert Drive share links to embed URLs
+      const videoUrl = getDriveEmbedUrl(form.videoUrl) || form.videoUrl;
+
+      const url = movie?.id ? `/api/admin/movies/${movie.id}` : "/api/admin/movies";
       const method = movie?.id ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, videoUrl }),
       });
 
       if (!res.ok) {
@@ -123,9 +160,7 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
 
         {/* Description */}
         <div>
-          <label className="text-sm text-gray-400 block mb-1">
-            Descrição *
-          </label>
+          <label className="text-sm text-gray-400 block mb-1">Descrição *</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -135,12 +170,84 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
           />
         </div>
 
-        {/* URLs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-gray-400 block mb-1">
-              URL da Thumbnail *
-            </label>
+        {/* Thumbnail */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm text-gray-400">Imagem de Capa *</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setThumbnailMode("upload")}
+                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${
+                  thumbnailMode === "upload"
+                    ? "bg-primary text-white"
+                    : "bg-white/10 text-gray-400 hover:bg-white/20"
+                }`}
+              >
+                <Upload size={12} />
+                Upload
+              </button>
+              <button
+                type="button"
+                onClick={() => setThumbnailMode("url")}
+                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${
+                  thumbnailMode === "url"
+                    ? "bg-primary text-white"
+                    : "bg-white/10 text-gray-400 hover:bg-white/20"
+                }`}
+              >
+                <LinkIcon size={12} />
+                URL
+              </button>
+            </div>
+          </div>
+
+          {thumbnailMode === "upload" ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file) handleImageUpload(file);
+              }}
+              className="w-full bg-dark-card border-2 border-dashed border-dark-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
+            >
+              {uploadingImage ? (
+                <p className="text-gray-400 text-sm">Enviando imagem...</p>
+              ) : form.thumbnail ? (
+                <div className="flex items-center justify-center gap-4">
+                  <img
+                    src={form.thumbnail}
+                    alt="Preview"
+                    className="w-20 h-28 object-cover rounded"
+                  />
+                  <div>
+                    <p className="text-green-400 text-sm mb-1">Imagem carregada!</p>
+                    <p className="text-gray-500 text-xs">Clique para trocar</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Upload size={32} className="mx-auto mb-2 text-gray-500" />
+                  <p className="text-gray-400 text-sm">
+                    Clique ou arraste a imagem aqui
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1">JPG ou PNG</p>
+                </>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                }}
+              />
+            </div>
+          ) : (
             <input
               type="url"
               value={form.thumbnail}
@@ -149,26 +256,52 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
               placeholder="https://..."
               className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition"
             />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400 block mb-1">
-              URL do Vídeo *
-            </label>
-            <input
-              type="url"
-              value={form.videoUrl}
-              onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-              required
-              placeholder="https://..."
-              className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition"
-            />
-          </div>
+          )}
+
+          {/* Thumbnail preview when using URL mode */}
+          {thumbnailMode === "url" && form.thumbnail && (
+            <div className="mt-2">
+              <img
+                src={form.thumbnail}
+                alt="Preview"
+                className="w-20 h-28 object-cover rounded-lg"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Video URL */}
+        <div>
+          <label className="text-sm text-gray-400 block mb-1">
+            URL do Vídeo *
+          </label>
+          <input
+            type="url"
+            value={form.videoUrl}
+            onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+            required
+            placeholder="Link do Google Drive ou URL direta .mp4"
+            className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition"
+          />
+          {driveEmbed && (
+            <p className="text-green-400 text-xs mt-1">
+              ✓ Link do Drive detectado — será convertido automaticamente para embed
+            </p>
+          )}
+          {form.videoUrl && !driveEmbed && (
+            <p className="text-gray-500 text-xs mt-1">
+              URL direta de vídeo (.mp4)
+            </p>
+          )}
+          <p className="text-gray-600 text-xs mt-1">
+            Cole o link de compartilhamento do Google Drive ou uma URL direta de MP4
+          </p>
         </div>
 
         {/* Banner */}
         <div>
           <label className="text-sm text-gray-400 block mb-1">
-            URL do Banner (opcional)
+            URL do Banner (opcional — aparece no hero da home)
           </label>
           <input
             type="url"
@@ -270,22 +403,10 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
           </div>
         </div>
 
-        {/* Preview */}
-        {form.thumbnail && (
-          <div>
-            <label className="text-sm text-gray-400 block mb-1">Preview</label>
-            <img
-              src={form.thumbnail}
-              alt="Preview"
-              className="w-32 h-48 object-cover rounded-lg"
-            />
-          </div>
-        )}
-
         {/* Submit */}
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || uploadingImage}
           className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 px-6 py-3 rounded-lg font-semibold transition"
         >
           <Save size={16} />

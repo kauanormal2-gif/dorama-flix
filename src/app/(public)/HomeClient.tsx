@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import HeroSection from "@/components/HeroSection";
 import MovieRow from "@/components/MovieRow";
 import Link from "next/link";
@@ -31,6 +32,17 @@ interface HomeClientProps {
   activeCategory: string;
 }
 
+interface ProgressData {
+  timestamp: number;
+  progress: number;
+  completed: boolean;
+  title: string;
+  thumbnail: string;
+  lastWatched: string;
+}
+
+const PROGRESS_KEY = "doramaflix_progress";
+
 export default function HomeClient({
   movies,
   categories,
@@ -38,6 +50,40 @@ export default function HomeClient({
   search,
   activeCategory,
 }: HomeClientProps) {
+  const [continueWatching, setContinueWatching] = useState<Movie[]>([]);
+  const [watched, setWatched] = useState<Movie[]>([]);
+
+  useEffect(() => {
+    try {
+      const all: Record<string, ProgressData> = JSON.parse(
+        localStorage.getItem(PROGRESS_KEY) || "{}"
+      );
+
+      const inProgress: Movie[] = [];
+      const completed: Movie[] = [];
+
+      // Sort by lastWatched descending
+      const entries = Object.entries(all).sort(
+        (a, b) =>
+          new Date(b[1].lastWatched).getTime() -
+          new Date(a[1].lastWatched).getTime()
+      );
+
+      for (const [slug, data] of entries) {
+        const movie = movies.find((m) => m.slug === slug);
+        if (!movie) continue;
+        if (data.completed) {
+          completed.push(movie);
+        } else if (data.progress > 2) {
+          inProgress.push(movie);
+        }
+      }
+
+      setContinueWatching(inProgress);
+      setWatched(completed);
+    } catch {}
+  }, [movies]);
+
   // Group movies by category
   const moviesByCategory = categories
     .map((cat) => ({
@@ -50,21 +96,22 @@ export default function HomeClient({
 
   const recentMovies = [...movies].slice(0, 20);
 
+  const showHero = featuredMovie && !search && !activeCategory;
+
   return (
     <div>
       {/* Hero */}
-      {featuredMovie && !search && !activeCategory && (
-        <HeroSection movie={featuredMovie} />
-      )}
+      {showHero && <HeroSection movie={featuredMovie} />}
 
       {/* Spacer when no hero */}
-      {(!featuredMovie || search || activeCategory) && (
-        <div className="pt-24" />
-      )}
+      {!showHero && <div className="pt-24" />}
 
       {/* Category filter */}
       <div className="max-w-7xl mx-auto px-4 mb-6">
-        <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+        <div
+          className="flex gap-2 overflow-x-auto pb-2"
+          style={{ scrollbarWidth: "none" }}
+        >
           <Link
             href="/"
             className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
@@ -91,7 +138,7 @@ export default function HomeClient({
         </div>
       </div>
 
-      {/* Search results */}
+      {/* Search results label */}
       {search && (
         <div className="max-w-7xl mx-auto px-4 mb-4">
           <p className="text-gray-400 text-sm">
@@ -112,6 +159,15 @@ export default function HomeClient({
           </div>
         ) : (
           <>
+            {/* Continue Watching */}
+            {!search && !activeCategory && continueWatching.length > 0 && (
+              <MovieRow
+                title="Continuar Assistindo"
+                movies={continueWatching}
+                showProgress
+              />
+            )}
+
             {/* All / Recent */}
             {!activeCategory && (
               <MovieRow title="Adicionados Recentemente" movies={recentMovies} />
@@ -135,13 +191,21 @@ export default function HomeClient({
                     movies={cat.movies}
                   />
                 ))}
+
+            {/* Watched */}
+            {!search && !activeCategory && watched.length > 0 && (
+              <MovieRow title="Assistidos" movies={watched} dimmed />
+            )}
           </>
         )}
       </div>
 
       {/* Footer */}
       <footer className="text-center py-8 text-gray-600 text-xs mt-8 border-t border-dark-border">
-        <p>Dorama Flix &copy; {new Date().getFullYear()}. Todos os direitos reservados.</p>
+        <p>
+          Dorama Flix &copy; {new Date().getFullYear()}. Todos os direitos
+          reservados.
+        </p>
       </footer>
     </div>
   );

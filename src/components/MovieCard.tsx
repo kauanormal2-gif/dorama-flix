@@ -11,6 +11,7 @@ interface MovieCardProps {
   rating?: number | null;
   year?: number | null;
   categories?: { category: { name: string } }[];
+  progress?: number;
 }
 
 export default function MovieCard({
@@ -20,6 +21,7 @@ export default function MovieCard({
   rating,
   year,
   categories,
+  progress,
 }: MovieCardProps) {
   return (
     <Link
@@ -66,8 +68,17 @@ export default function MovieCard({
           )}
         </div>
       </div>
+      {/* Progress bar */}
+      {progress !== undefined && progress > 0 && (
+        <div className="w-full bg-white/20 rounded-full h-0.5 mt-1">
+          <div
+            className="bg-primary h-0.5 rounded-full"
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
+      )}
       {/* Title below card */}
-      <p className="text-xs text-gray-400 mt-2 line-clamp-1 group-hover:text-white transition">
+      <p className="text-xs text-gray-400 mt-1 line-clamp-1 group-hover:text-white transition">
         {title}
       </p>
     </Link>
