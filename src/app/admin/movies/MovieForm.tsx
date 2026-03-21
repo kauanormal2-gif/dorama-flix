@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, Upload, Link as LinkIcon, Film, FileVideo } from "lucide-react";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
 
 interface Category {
   id: string;
@@ -77,18 +78,14 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
     setUploadingImage(true);
     setError("");
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("type", "image");
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Erro ao fazer upload da imagem");
-        return;
-      }
-      setForm((prev) => ({ ...prev, thumbnail: data.url }));
-    } catch {
-      setError("Erro ao fazer upload da imagem. Verifique sua conexão.");
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+      });
+      setForm((prev) => ({ ...prev, thumbnail: blob.url }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao fazer upload";
+      setError(msg);
     } finally {
       setUploadingImage(false);
     }
@@ -96,26 +93,18 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
 
   const handleVideoUpload = async (file: File) => {
     setUploadingVideo(true);
-    setVideoUploadProgress("Enviando vídeo...");
     setError("");
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    setVideoUploadProgress(`Enviando vídeo (${sizeMB} MB)...`);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("type", "video");
-
-      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-      setVideoUploadProgress(`Enviando vídeo (${sizeMB} MB)...`);
-
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Erro ao fazer upload do vídeo");
-        return;
-      }
-      setForm((prev) => ({ ...prev, videoUrl: data.url }));
-      setVideoUploadProgress("");
-    } catch {
-      setError("Erro ao fazer upload do vídeo. Verifique sua conexão.");
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+      });
+      setForm((prev) => ({ ...prev, videoUrl: blob.url }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao fazer upload";
+      setError(msg);
     } finally {
       setUploadingVideo(false);
       setVideoUploadProgress("");
