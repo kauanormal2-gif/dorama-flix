@@ -49,6 +49,32 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  try {
+    const body = await request.json();
+
+    const movie = await prisma.movie.update({
+      where: { id },
+      data: { featured: body.featured },
+    });
+
+    return NextResponse.json({ movie });
+  } catch {
+    return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

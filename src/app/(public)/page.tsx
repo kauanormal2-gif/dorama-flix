@@ -14,14 +14,14 @@ export default async function HomePage({
   if (search) where.title = { contains: search };
   if (category) where.categories = { some: { category: { slug: category } } };
 
-  const [movies, categories, featuredMovie] = await Promise.all([
+  const [movies, categories, featuredMovies] = await Promise.all([
     prisma.movie.findMany({
       where,
       include: { categories: { include: { category: true } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),
-    prisma.movie.findFirst({
+    prisma.movie.findMany({
       where: { featured: true, status: "active" },
       include: { categories: { include: { category: true } } },
       orderBy: { createdAt: "desc" },
@@ -32,7 +32,7 @@ export default async function HomePage({
     <HomeClient
       movies={movies}
       categories={categories}
-      featuredMovie={featuredMovie}
+      featuredMovies={featuredMovies}
       search={search}
       activeCategory={category}
     />

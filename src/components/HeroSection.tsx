@@ -1,28 +1,66 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Play, Info } from "lucide-react";
+import { Play, Info, ChevronLeft, ChevronRight } from "lucide-react";
 
-interface HeroProps {
-  movie: {
-    slug: string;
-    title: string;
-    description: string;
-    bannerUrl?: string | null;
-    thumbnail: string;
-    year?: number | null;
-    categories?: { category: { name: string } }[];
-  };
+interface Movie {
+  slug: string;
+  title: string;
+  description: string;
+  bannerUrl?: string | null;
+  thumbnail: string;
+  year?: number | null;
+  categories?: { category: { name: string } }[];
 }
 
-export default function HeroSection({ movie }: HeroProps) {
+interface HeroProps {
+  movies: Movie[];
+}
+
+export default function HeroSection({ movies }: HeroProps) {
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+
+  const goTo = useCallback(
+    (index: number) => {
+      if (animating || movies.length <= 1) return;
+      setAnimating(true);
+      setTimeout(() => {
+        setCurrent(index);
+        setAnimating(false);
+      }, 300);
+    },
+    [animating, movies.length]
+  );
+
+  const next = useCallback(() => {
+    goTo((current + 1) % movies.length);
+  }, [current, movies.length, goTo]);
+
+  const prev = useCallback(() => {
+    goTo((current - 1 + movies.length) % movies.length);
+  }, [current, movies.length, goTo]);
+
+  // Auto-avança a cada 6 segundos
+  useEffect(() => {
+    if (movies.length <= 1) return;
+    const interval = setInterval(next, 6000);
+    return () => clearInterval(interval);
+  }, [next, movies.length]);
+
+  if (!movies.length) return null;
+
+  const movie = movies[current];
   const bgImage = movie.bannerUrl || movie.thumbnail;
 
   return (
-    <section className="relative h-[70vh] md:h-[80vh] w-full">
+    <section className="relative h-[70vh] md:h-[80vh] w-full overflow-hidden">
       {/* Background */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 ${
+          animating ? "opacity-0" : "opacity-100"
+        }`}
         style={{ backgroundImage: `url(${bgImage})` }}
       />
       {/* Gradients */}
@@ -31,7 +69,11 @@ export default function HeroSection({ movie }: HeroProps) {
 
       {/* Content */}
       <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-16 md:pb-24">
-        <div className="max-w-2xl animate-fade-in">
+        <div
+          className={`max-w-2xl transition-all duration-500 ${
+            animating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+          }`}
+        >
           {movie.categories && movie.categories.length > 0 && (
             <div className="flex gap-2 mb-3">
               {movie.categories.map((c) => (
@@ -68,6 +110,39 @@ export default function HeroSection({ movie }: HeroProps) {
           </div>
         </div>
       </div>
+
+      {/* Navegação — só aparece se tiver mais de 1 */}
+      {movies.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full transition"
+          >
+            <ChevronLeft size={20} className="text-white" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full transition"
+          >
+            <ChevronRight size={20} className="text-white" />
+          </button>
+
+          {/* Bolinhas indicadoras */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+            {movies.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className={`h-2 rounded-full transition-all ${
+                  i === current
+                    ? "bg-white w-6"
+                    : "bg-white/40 hover:bg-white/60 w-2"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

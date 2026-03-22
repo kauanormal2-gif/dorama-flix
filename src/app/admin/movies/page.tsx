@@ -21,6 +21,7 @@ export default function AdminMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchMovies = () => {
     setLoading(true);
@@ -38,9 +39,31 @@ export default function AdminMovies() {
     fetchMovies();
   };
 
+  const handleToggleBanner = async (movie: Movie) => {
+    setTogglingId(movie.id);
+    const newFeatured = !movie.featured;
+
+    await fetch(`/api/admin/movies/${movie.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ featured: newFeatured }),
+    });
+
+    // Atualiza local só o filme clicado
+    setMovies((prev) =>
+      prev.map((m) =>
+        m.id === movie.id ? { ...m, featured: newFeatured } : m
+      )
+    );
+
+    setTogglingId(null);
+  };
+
   const filtered = movies.filter((m) =>
     m.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  const featuredMovies = movies.filter((m) => m.featured);
 
   return (
     <div>
@@ -54,6 +77,22 @@ export default function AdminMovies() {
           Novo Filme
         </Link>
       </div>
+
+      {/* Banner info */}
+      {featuredMovies.length > 0 ? (
+        <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 rounded-lg px-4 py-2 mb-4 text-sm">
+          <Star size={14} className="fill-yellow-400 mt-0.5 shrink-0" />
+          <span>
+            No banner ({featuredMovies.length}): <strong>{featuredMovies.map((m) => m.title).join(", ")}</strong>
+            {featuredMovies.length > 1 && " — o carrossel rotaciona entre eles"}
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 bg-gray-500/10 border border-gray-500/30 text-gray-400 rounded-lg px-4 py-2 mb-4 text-sm">
+          <Star size={14} />
+          <span>Nenhum filme no banner. Clique na estrela ⭐ de um ou mais filmes para colocá-los no carrossel da home.</span>
+        </div>
+      )}
 
       {/* Search */}
       <div className="flex items-center bg-dark-card border border-dark-border rounded-lg px-4 py-2 mb-4">
@@ -100,7 +139,7 @@ export default function AdminMovies() {
                           <p className="font-medium text-white flex items-center gap-1">
                             {movie.title}
                             {movie.featured && (
-                              <Star size={12} className="text-gold fill-gold" />
+                              <Star size={12} className="text-yellow-400 fill-yellow-400" />
                             )}
                           </p>
                           <p className="text-xs text-gray-500">{movie.slug}</p>
@@ -141,6 +180,27 @@ export default function AdminMovies() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Botão Banner */}
+                        <button
+                          onClick={() => handleToggleBanner(movie)}
+                          disabled={togglingId === movie.id}
+                          title={movie.featured ? "Remover do banner" : "Colocar no banner"}
+                          className={`p-2 rounded-lg transition ${
+                            movie.featured
+                              ? "bg-yellow-500/20 hover:bg-yellow-500/30"
+                              : "hover:bg-white/10"
+                          }`}
+                        >
+                          <Star
+                            size={14}
+                            className={
+                              movie.featured
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-400"
+                            }
+                          />
+                        </button>
+
                         <Link
                           href={`/admin/movies/${movie.id}`}
                           className="p-2 hover:bg-white/10 rounded-lg transition"

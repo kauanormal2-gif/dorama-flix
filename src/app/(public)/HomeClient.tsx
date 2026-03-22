@@ -27,7 +27,7 @@ interface Category {
 interface HomeClientProps {
   movies: Movie[];
   categories: Category[];
-  featuredMovie: Movie | null;
+  featuredMovies: Movie[];
   search: string;
   activeCategory: string;
 }
@@ -46,7 +46,7 @@ const PROGRESS_KEY = "doramaflix_progress";
 export default function HomeClient({
   movies,
   categories,
-  featuredMovie,
+  featuredMovies,
   search,
   activeCategory,
 }: HomeClientProps) {
@@ -96,12 +96,12 @@ export default function HomeClient({
 
   const recentMovies = [...movies].slice(0, 20);
 
-  const showHero = featuredMovie && !search && !activeCategory;
+  const showHero = featuredMovies.length > 0 && !search && !activeCategory;
 
   return (
     <div>
-      {/* Hero */}
-      {showHero && <HeroSection movie={featuredMovie} />}
+      {/* Hero carrossel */}
+      {showHero && <HeroSection movies={featuredMovies} />}
 
       {/* Spacer when no hero */}
       {!showHero && <div className="pt-24" />}
