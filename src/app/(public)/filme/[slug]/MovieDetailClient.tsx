@@ -10,6 +10,7 @@ import {
   Calendar,
   Clock,
   RotateCcw,
+  Check,
 } from "lucide-react";
 import MovieRow from "@/components/MovieRow";
 
@@ -67,6 +68,7 @@ function isDriveUrl(url: string) {
 export default function MovieDetailClient({ movie, related }: Props) {
   const [playing, setPlaying] = useState(false);
   const [favorited, setFavorited] = useState(false);
+  const [markedAsWatched, setMarkedAsWatched] = useState(false);
   const [savedProgress, setSavedProgress] = useState<ProgressData | null>(null);
   const [resumeFrom, setResumeFrom] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -76,8 +78,12 @@ export default function MovieDetailClient({ movie, related }: Props) {
 
   useEffect(() => {
     const progress = getProgress(movie.slug);
-    if (progress && !progress.completed && progress.timestamp > 5) {
-      setSavedProgress(progress);
+    if (progress) {
+      if (progress.completed) {
+        setMarkedAsWatched(true);
+      } else if (progress.timestamp > 5) {
+        setSavedProgress(progress);
+      }
     }
   }, [movie.slug]);
 
@@ -113,6 +119,31 @@ export default function MovieDetailClient({ movie, related }: Props) {
       thumbnail: movie.thumbnail,
       lastWatched: new Date().toISOString(),
     });
+  };
+
+  const toggleWatched = () => {
+    const newState = !markedAsWatched;
+    setMarkedAsWatched(newState);
+
+    if (newState) {
+      // Marca como visto
+      saveProgress(movie.slug, {
+        timestamp: 0,
+        progress: 100,
+        completed: true,
+        title: movie.title,
+        thumbnail: movie.thumbnail,
+        lastWatched: new Date().toISOString(),
+      });
+      setSavedProgress(null);
+    } else {
+      // Remove dos vistos
+      try {
+        const all = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+        delete all[movie.slug];
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
+      } catch {}
+    }
   };
 
   const handleDrivePlay = () => {
@@ -313,6 +344,20 @@ export default function MovieDetailClient({ movie, related }: Props) {
                         Assistir Agora
                       </button>
                     )}
+                    {/* Marcar como visto */}
+                    <button
+                      onClick={toggleWatched}
+                      title={markedAsWatched ? "Remover dos vistos" : "Marcar como visto"}
+                      className={`flex items-center gap-2 px-5 py-3 rounded-full font-medium transition text-sm ${
+                        markedAsWatched
+                          ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                          : "bg-white/20 hover:bg-white/30 text-white"
+                      }`}
+                    >
+                      <Check size={16} />
+                      {markedAsWatched ? "Visto" : "Marcar como visto"}
+                    </button>
+
                     <button
                       onClick={() => setFavorited(!favorited)}
                       className={`p-3 rounded-full transition ${

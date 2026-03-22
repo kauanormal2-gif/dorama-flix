@@ -84,6 +84,9 @@ export default function HomeClient({
     } catch {}
   }, [movies]);
 
+  // Categoria especial "Mais Assistidos" — fica antes de tudo
+  const maisAssistidosSlug = "mais-assistidos";
+
   // Group movies by category
   const moviesByCategory = categories
     .map((cat) => ({
@@ -93,6 +96,13 @@ export default function HomeClient({
       ),
     }))
     .filter((cat) => cat.movies.length > 0);
+
+  const maisAssistidos = moviesByCategory.find(
+    (c) => c.slug === maisAssistidosSlug
+  );
+  const otherCategories = moviesByCategory.filter(
+    (c) => c.slug !== maisAssistidosSlug
+  );
 
   const recentMovies = [...movies].slice(0, 20);
 
@@ -168,12 +178,20 @@ export default function HomeClient({
               />
             )}
 
+            {/* Mais Assistidos — logo após Continuar Assistindo */}
+            {!search && !activeCategory && maisAssistidos && maisAssistidos.movies.length > 0 && (
+              <MovieRow
+                title={maisAssistidos.name}
+                movies={maisAssistidos.movies}
+              />
+            )}
+
             {/* All / Recent */}
             {!activeCategory && (
               <MovieRow title="Adicionados Recentemente" movies={recentMovies} />
             )}
 
-            {/* By category */}
+            {/* By category (exceto Mais Assistidos que já foi mostrado acima) */}
             {activeCategory
               ? moviesByCategory
                   .filter((c) => c.slug === activeCategory)
@@ -184,7 +202,7 @@ export default function HomeClient({
                       movies={cat.movies}
                     />
                   ))
-              : moviesByCategory.map((cat) => (
+              : otherCategories.map((cat) => (
                   <MovieRow
                     key={cat.id}
                     title={cat.name}
