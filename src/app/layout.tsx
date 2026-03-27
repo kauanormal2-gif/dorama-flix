@@ -12,6 +12,17 @@ export const metadata: Metadata = {
   title: "Dorama Flix - Filmes e Séries Asiáticas",
   description:
     "Assista aos melhores filmes e séries asiáticas. Histórias de amor, dramas emocionantes e muito mais!",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Dorama Flix",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "msapplication-TileColor": "#E50914",
+    "msapplication-tap-highlight": "no",
+  },
 };
 
 export default function RootLayout({
@@ -21,6 +32,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={`${poppins.variable} h-full`}>
+      <head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="theme-color" content="#E50914" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-dark text-white antialiased">
         {children}
       </body>
