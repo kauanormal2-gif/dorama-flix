@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Menu, X, Download } from "lucide-react";
+import { Search, Menu, X, Download, Share } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -15,7 +15,14 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    setIsIOS(ios);
+  }, []);
 
   // Captura o evento de instalação do PWA
   useEffect(() => {
@@ -90,6 +97,7 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white placeholder-gray-400 w-full text-sm"
             />
           </form>
+          {/* Android: botão nativo */}
           {canInstall && (
             <button
               onClick={handleInstall}
@@ -99,10 +107,31 @@ export default function Navbar() {
               Baixar o App
             </button>
           )}
-          {!canInstall && (
-            <p className="text-gray-500 text-xs px-2 pt-1">
-              Para instalar: toque em <span className="text-gray-300">Compartilhar ↑</span> → &quot;Adicionar à tela de início&quot;
-            </p>
+
+          {/* iOS: botão que abre guia passo a passo */}
+          {isIOS && !canInstall && (
+            <div className="mt-1">
+              <button
+                onClick={() => setShowIOSGuide(!showIOSGuide)}
+                className="flex items-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white text-sm py-2.5 px-4 rounded-full font-semibold transition"
+              >
+                <Download size={18} />
+                Baixar o App
+              </button>
+              {showIOSGuide && (
+                <div className="mt-2 bg-white/10 rounded-2xl p-3 text-sm">
+                  <p className="text-white font-semibold mb-2">Instalar no iPhone:</p>
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="bg-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+                    <p className="text-gray-300">Toque no ícone <Share size={13} className="inline mb-0.5" /> <span className="font-semibold text-white">Compartilhar</span> na barra do Safari</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="bg-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                    <p className="text-gray-300">Role e toque em <span className="font-semibold text-white">&quot;Adicionar à Tela de Início&quot;</span> e confirme</p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
