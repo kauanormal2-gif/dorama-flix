@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, LogIn } from "lucide-react";
 
 export default function Navbar() {
   const [search, setSearch] = useState("");
@@ -53,7 +53,7 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-black/95 backdrop-blur-sm px-4 pb-4 animate-fade-in">
-          <form onSubmit={handleSearch} className="flex items-center bg-white/10 rounded-full px-4 py-2">
+          <form onSubmit={handleSearch} className="flex items-center bg-white/10 rounded-full px-4 py-2 mb-3">
             <Search size={18} className="text-gray-400 mr-2" />
             <input
               type="text"
@@ -63,6 +63,14 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white placeholder-gray-400 w-full text-sm"
             />
           </form>
+          <Link
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center gap-2 text-gray-300 hover:text-white text-sm py-2 px-2 rounded-lg hover:bg-white/10 transition"
+          >
+            <LogIn size={18} />
+            Entrar / Admin
+          </Link>
         </div>
       )}
     </nav>
