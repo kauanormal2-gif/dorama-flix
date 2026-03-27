@@ -1,14 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Menu, X, LogIn } from "lucide-react";
+import { Search, Menu, X, Download } from "lucide-react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 export default function Navbar() {
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
   const router = useRouter();
+
+  // Captura o evento de instalação do PWA
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    const prompt = deferredPrompt as BeforeInstallPromptEvent;
+    prompt.prompt();
+    await prompt.userChoice;
+    setDeferredPrompt(null);
+    setCanInstall(false);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,14 +90,20 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white placeholder-gray-400 w-full text-sm"
             />
           </form>
-          <Link
-            href="/login"
-            onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-2 text-gray-300 hover:text-white text-sm py-2 px-2 rounded-lg hover:bg-white/10 transition"
-          >
-            <LogIn size={18} />
-            Entrar / Admin
-          </Link>
+          {canInstall && (
+            <button
+              onClick={handleInstall}
+              className="flex items-center gap-2 w-full bg-primary hover:bg-primary-hover text-white text-sm py-2.5 px-4 rounded-full font-semibold transition mt-1"
+            >
+              <Download size={18} />
+              Baixar o App
+            </button>
+          )}
+          {!canInstall && (
+            <p className="text-gray-500 text-xs px-2 pt-1">
+              Para instalar: toque em <span className="text-gray-300">Compartilhar ↑</span> → &quot;Adicionar à tela de início&quot;
+            </p>
+          )}
         </div>
       )}
     </nav>
