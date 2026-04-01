@@ -221,7 +221,7 @@ export default function HomeClient({
       {/* Footer */}
       <footer className="text-center py-8 text-gray-600 text-xs mt-8 border-t border-dark-border">
         <p>
-          Dorama Flix &copy; {new Date().getFullYear()}. Todos os direitos
+          Drama Flix &copy; {new Date().getFullYear()}. Todos os direitos
           reservados.
         </p>
       </footer>

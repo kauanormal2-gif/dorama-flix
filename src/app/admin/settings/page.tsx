@@ -14,7 +14,7 @@ interface Settings {
 
 export default function AdminSettings() {
   const [form, setForm] = useState<Settings>({
-    siteName: "Dorama Flix",
+    siteName: "Drama Flix",
     siteTagline: "Filmes e Séries Asiáticas",
     logoUrl: "",
     heroTitle: "",
@@ -30,7 +30,7 @@ export default function AdminSettings() {
       .then((d) => {
         if (d.settings) {
           setForm({
-            siteName: d.settings.siteName || "Dorama Flix",
+            siteName: d.settings.siteName || "Drama Flix",
             siteTagline: d.settings.siteTagline || "",
             logoUrl: d.settings.logoUrl || "",
             heroTitle: d.settings.heroTitle || "",

@@ -9,14 +9,14 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Dorama Flix - Filmes e Séries Asiáticas",
+  title: "Drama Flix - Filmes e Séries Asiáticas",
   description:
     "Assista aos melhores filmes e séries asiáticas. Histórias de amor, dramas emocionantes e muito mais!",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Dorama Flix",
+    title: "Drama Flix",
   },
   other: {
     "mobile-web-app-capable": "yes",
