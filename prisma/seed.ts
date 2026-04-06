@@ -12,11 +12,11 @@ async function main() {
   // Create admin user
   const adminPassword = await bcrypt.hash("admin123", 12);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@doramaflix.com" },
+    where: { email: "admin@dramaflix.com" },
     update: {},
     create: {
       name: "Admin",
-      email: "admin@doramaflix.com",
+      email: "admin@dramaflix.com",
       password: adminPassword,
       role: "admin",
     },
@@ -244,7 +244,7 @@ async function main() {
   console.log("Site settings created");
 
   console.log("\n✅ Seed completed!");
-  console.log("Admin login: admin@doramaflix.com / admin123");
+  console.log("Admin login: admin@dramaflix.com / admin123");
 }
 
 main()
