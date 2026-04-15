@@ -34,6 +34,9 @@ export default function MovieCard({
           alt={title}
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = `https://placehold.co/200x300/1a1a2e/e50914?text=${encodeURIComponent(title.slice(0,15))}`;
+          }}
         />
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
