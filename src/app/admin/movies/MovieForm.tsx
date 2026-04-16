@@ -30,6 +30,8 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const duplicateTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Upload states
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -60,6 +62,26 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
       .then((r) => r.json())
       .then((d) => setCategories(d.categories || []));
   }, []);
+
+  // Check for duplicate titles while typing
+  const checkDuplicate = (title: string) => {
+    if (duplicateTimer.current) clearTimeout(duplicateTimer.current);
+    if (!title.trim() || movie?.id) {
+      setDuplicateWarning(null);
+      return;
+    }
+    duplicateTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/movies?search=${encodeURIComponent(title.trim())}`);
+        const data = await res.json();
+        const found = (data.movies || []).find(
+          (m: { title: string }) =>
+            m.title.toLowerCase().trim() === title.toLowerCase().trim()
+        );
+        setDuplicateWarning(found ? `Já existe uma série com o nome "${found.title}"!` : null);
+      } catch {}
+    }, 500);
+  };
 
   // Detect if existing movie has Drive URL
   useEffect(() => {
@@ -126,6 +148,10 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (duplicateWarning) {
+      setError("Corrija o título duplicado antes de salvar.");
+      return;
+    }
     setSaving(true);
 
     try {
@@ -193,10 +219,20 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
           <input
             type="text"
             value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            onChange={(e) => {
+              setForm({ ...form, title: e.target.value });
+              checkDuplicate(e.target.value);
+            }}
             required
-            className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition"
+            className={`w-full bg-dark-card border rounded-lg px-4 py-3 text-white focus:outline-none transition ${
+              duplicateWarning ? "border-yellow-500 focus:border-yellow-500" : "border-dark-border focus:border-primary"
+            }`}
           />
+          {duplicateWarning && (
+            <p className="mt-1.5 text-yellow-400 text-sm flex items-center gap-1.5">
+              ⚠️ {duplicateWarning}
+            </p>
+          )}
         </div>
 
         {/* Description */}

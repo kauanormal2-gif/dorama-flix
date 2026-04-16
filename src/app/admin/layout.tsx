@@ -13,13 +13,11 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ImageIcon,
 } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/movies", label: "Filmes", icon: Film },
-  { href: "/admin/bulk-images", label: "Atualizar Capas", icon: ImageIcon },
   { href: "/admin/categories", label: "Categorias", icon: Tags },
   { href: "/admin/users", label: "Usuários", icon: Users },
   { href: "/admin/settings", label: "Configurações", icon: Settings },
