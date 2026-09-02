@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Search, Star } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Star, Link2, Check } from "lucide-react";
 
 interface Movie {
   id: string;
@@ -22,6 +22,8 @@ export default function AdminMovies() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [copiadoId, setCopiadoId] = useState<string | null>(null);
+  const [gerandoId, setGerandoId] = useState<string | null>(null);
 
   const fetchMovies = () => {
     setLoading(true);
@@ -32,6 +34,35 @@ export default function AdminMovies() {
   };
 
   useEffect(() => { fetchMovies(); }, []);
+
+  /**
+   * Copia o link fixo de divulgação da série.
+   *
+   * O link é sempre o mesmo pra mesma série e não vence — quem receber assiste
+   * aquela série inteira à vontade, e no fim o site oferece a assinatura.
+   */
+  const copiarLinkDaSerie = async (movie: Movie) => {
+    setGerandoId(movie.id);
+    try {
+      const res = await fetch(`/api/admin/movies/${movie.id}/link`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Não deu pra gerar o link.");
+        return;
+      }
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/convite/${data.token}`
+      );
+      setCopiadoId(movie.id);
+      setTimeout(() => setCopiadoId(null), 2500);
+    } catch {
+      alert("Não deu pra copiar o link. Tente de novo.");
+    } finally {
+      setGerandoId(null);
+    }
+  };
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Deletar "${title}"?`)) return;
@@ -199,6 +230,36 @@ export default function AdminMovies() {
                                 : "text-gray-400"
                             }
                           />
+                        </button>
+
+                        {/* Link fixo pra divulgar essa série sozinha */}
+                        <button
+                          onClick={() => copiarLinkDaSerie(movie)}
+                          disabled={
+                            gerandoId === movie.id || movie.status !== "active"
+                          }
+                          title={
+                            movie.status === "active"
+                              ? "Copiar link desta série"
+                              : "Publique a série pra gerar o link"
+                          }
+                          className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-30 ${
+                            copiadoId === movie.id
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-white/10 hover:bg-white/20 text-gray-200"
+                          }`}
+                        >
+                          {copiadoId === movie.id ? (
+                            <>
+                              <Check size={15} />
+                              Copiado!
+                            </>
+                          ) : (
+                            <>
+                              <Link2 size={15} />
+                              Link
+                            </>
+                          )}
                         </button>
 
                         <Link

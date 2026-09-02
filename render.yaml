@@ -1,0 +1,64 @@
+# Hospedagem fora da Vercel.
+#
+# O app é um Next.js comum rodando em Node — não usa nada exclusivo da Vercel,
+# então roda aqui sem mudar código. Os vídeos e as capas continuam na
+# Cloudflare R2 e o banco continua na Neon; nada disso muda de lugar.
+#
+# Os segredos NÃO ficam neste arquivo: são cadastrados no painel do Render.
+services:
+  - type: web
+    name: drama-flix
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/auth/me
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Cadastrar no painel (Environment): valores vêm do .env.producao local
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_R2_BUCKET
+        sync: false
+      - key: CLOUDFLARE_R2_PUBLIC_URL
+        sync: false
+      - key: CLOUDFLARE_R2_ACCESS_KEY_ID
+        sync: false
+      - key: CLOUDFLARE_R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: EFI_ENV
+        sync: false
+      - key: EFI_PIX_CLIENT_ID
+        sync: false
+      - key: EFI_PIX_CLIENT_SECRET
+        sync: false
+      - key: EFI_PIX_KEY
+        sync: false
+      - key: EFI_CHARGE_CLIENT_ID
+        sync: false
+      - key: EFI_CHARGE_CLIENT_SECRET
+        sync: false
+      - key: EFI_CERT_PEM
+        sync: false
+      - key: NEXT_PUBLIC_EFI_PAYEE_CODE
+        sync: false
+      - key: WEBHOOK_SECRET_LOWFY
+        sync: false
+      - key: WEBHOOK_ALLOW_UNSIGNED
+        sync: false
+      - key: CRON_SECRET
+        sync: false

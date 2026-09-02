@@ -3,19 +3,25 @@
 import { useState, useEffect } from "react";
 import HeroSection from "@/components/HeroSection";
 import MovieRow from "@/components/MovieRow";
+import MovieCard from "@/components/MovieCard";
 import Link from "next/link";
 
+/** O que a capinha precisa. Sem sinopse e sem link de vídeo, de propósito. */
 interface Movie {
   id: string;
   title: string;
   slug: string;
-  description: string;
   thumbnail: string;
-  bannerUrl?: string | null;
   rating?: number | null;
   year?: number | null;
   featured: boolean;
   categories: { category: { id: string; name: string; slug: string } }[];
+}
+
+/** O destaque do topo mostra sinopse e banner, então recebe os dois a mais. */
+interface MovieDestaque extends Movie {
+  description: string;
+  bannerUrl?: string | null;
 }
 
 interface Category {
@@ -27,7 +33,7 @@ interface Category {
 interface HomeClientProps {
   movies: Movie[];
   categories: Category[];
-  featuredMovies: Movie[];
+  featuredMovies: MovieDestaque[];
   search: string;
   activeCategory: string;
 }
@@ -117,34 +123,42 @@ export default function HomeClient({
       {!showHero && <div className="pt-24" />}
 
       {/* Category filter */}
-      <div className="max-w-7xl mx-auto px-4 mb-6">
-        <div
-          className="flex gap-2 overflow-x-auto pb-2"
-          style={{ scrollbarWidth: "none" }}
-        >
-          <Link
-            href="/"
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
-              !activeCategory
-                ? "bg-primary text-white"
-                : "bg-white/10 text-gray-300 hover:bg-white/20"
-            }`}
+      <div className="relative border-b border-white/5 mb-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div
+            className="flex gap-1 overflow-x-auto scrollbar-hide"
+            style={{ scrollbarWidth: "none" }}
           >
-            Todos
-          </Link>
-          {categories.map((cat) => (
             <Link
-              key={cat.id}
-              href={`/?category=${cat.slug}`}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
-                activeCategory === cat.slug
-                  ? "bg-primary text-white"
-                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+              href="/"
+              className={`flex-shrink-0 relative px-4 py-4 text-sm font-medium transition ${
+                !activeCategory
+                  ? "text-white"
+                  : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              {cat.name}
+              Todos
+              {!activeCategory && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-8 bg-primary rounded-t" />
+              )}
             </Link>
-          ))}
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/?category=${cat.slug}`}
+                className={`flex-shrink-0 relative px-4 py-4 text-sm font-medium transition ${
+                  activeCategory === cat.slug
+                    ? "text-white"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                {cat.name}
+                {activeCategory === cat.slug && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-8 bg-primary rounded-t" />
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -159,7 +173,7 @@ export default function HomeClient({
       )}
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto pt-2">
         {movies.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-lg">Nenhum filme encontrado</p>
@@ -169,6 +183,14 @@ export default function HomeClient({
           </div>
         ) : (
           <>
+            {/* Mais Assistidos — primeira fileira da home */}
+            {!search && !activeCategory && maisAssistidos && maisAssistidos.movies.length > 0 && (
+              <MovieRow
+                title={maisAssistidos.name}
+                movies={maisAssistidos.movies}
+              />
+            )}
+
             {/* Continue Watching */}
             {!search && !activeCategory && continueWatching.length > 0 && (
               <MovieRow
@@ -178,37 +200,35 @@ export default function HomeClient({
               />
             )}
 
-            {/* Mais Assistidos — logo após Continuar Assistindo */}
-            {!search && !activeCategory && maisAssistidos && maisAssistidos.movies.length > 0 && (
-              <MovieRow
-                title={maisAssistidos.name}
-                movies={maisAssistidos.movies}
-              />
-            )}
-
             {/* All / Recent */}
             {!activeCategory && (
               <MovieRow title="Adicionados Recentemente" movies={recentMovies} />
             )}
 
-            {/* By category (exceto Mais Assistidos que já foi mostrado acima) */}
-            {activeCategory
-              ? moviesByCategory
-                  .filter((c) => c.slug === activeCategory)
-                  .map((cat) => (
-                    <MovieRow
-                      key={cat.id}
-                      title={cat.name}
-                      movies={cat.movies}
-                    />
-                  ))
-              : otherCategories.map((cat) => (
-                  <MovieRow
-                    key={cat.id}
-                    title={cat.name}
-                    movies={cat.movies}
-                  />
-                ))}
+            {/* Gênero ou busca: grade que preenche a página (rola pra baixo,
+                não pro lado). Sem carrossel e sem repetir filme em várias
+                fileiras. */}
+            {activeCategory || search ? (
+              <div className="px-4 md:px-6">
+                {activeCategory && (
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-5">
+                    {categories.find((c) => c.slug === activeCategory)?.name}
+                  </h2>
+                )}
+                {/* [&>a]:w-full anula a largura fixa do MovieCard pra ele
+                    esticar e a grade ocupar a largura toda */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5 [&>a]:w-full">
+                  {movies.map((movie) => (
+                    <MovieCard key={movie.id} {...movie} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Home: fileiras por categoria (Mais Assistidos já saiu acima) */
+              otherCategories.map((cat) => (
+                <MovieRow key={cat.id} title={cat.name} movies={cat.movies} />
+              ))
+            )}
 
             {/* Watched */}
             {!search && !activeCategory && watched.length > 0 && (
@@ -218,13 +238,6 @@ export default function HomeClient({
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="text-center py-8 text-gray-600 text-xs mt-8 border-t border-dark-border">
-        <p>
-          Drama Flix &copy; {new Date().getFullYear()}. Todos os direitos
-          reservados.
-        </p>
-      </footer>
     </div>
   );
 }

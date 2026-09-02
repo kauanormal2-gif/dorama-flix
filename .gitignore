@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+*.p12
 
 # debug
 npm-debug.log*
@@ -42,3 +43,10 @@ next-env.d.ts
 
 /src/generated/prisma
 *.db
+
+# Lista de senhas pra cadastrar na hospedagem — NUNCA versionar
+VARIAVEIS-NOVA-HOSPEDAGEM.txt
+
+# Scripts de uso pontual e backups de migração — ficam só na máquina dela
+tmp-*.ts
+backup-*.json

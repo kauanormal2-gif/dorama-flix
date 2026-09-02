@@ -15,6 +15,12 @@ export async function PUT(
   const { id } = await params;
   const { name, role } = await request.json();
 
+  // Sem isso dava pra gravar qualquer texto como papel e criar um cargo que
+  // nenhuma regra do site conhece.
+  if (role !== undefined && !["admin", "colaborador", "user"].includes(role)) {
+    return NextResponse.json({ error: "Papel inválido" }, { status: 400 });
+  }
+
   const user = await prisma.user.update({
     where: { id },
     data: { name, role },

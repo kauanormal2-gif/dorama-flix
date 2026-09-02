@@ -16,8 +16,83 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Assinatura
+  subscriptionStatus    String    @default("inactive") // "active", "inactive"
+  subscriptionPlatform  String?   // "lowfy", "cakto", "efi"
+  subscriptionExpiresAt DateTime?
+
+  // Segurança
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+
   favorites     Favorite[]
   watchProgress WatchProgress[]
+}
+
+// Push subscriptions (Web Push)
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  lastUsed  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Rate limiting por IP em endpoints sensíveis (auth, register)
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   // ex: "login:1.2.3.4" ou "register:1.2.3.4"
+  count     Int      @default(1)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([key])
+  @@index([resetAt])
+}
+
+model GuestToken {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  label        String
+  durationDays Int      @default(30) // 14 ou 30
+  /// Vazio = nunca vence. Usado pelos links fixos de divulgação de série.
+  expiresAt    DateTime?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  /// Quando preenchido, o convite libera só essa série. Vazio = catálogo todo.
+  movieId      String?
+  movie        Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+}
+
+// Pagamentos Efí (Pix, cartão e boleto)
+model Payment {
+  id        String @id @default(cuid())
+  provider  String @default("efi")
+  method    String // "pix", "card", "boleto"
+  plan      String // "mensal", "trimestral", "anual"
+  amount    Int // centavos
+  status    String @default("pending") // "pending", "paid", "failed", "expired", "refunded"
+
+  email String
+  name  String
+  cpf   String?
+
+  txid     String? @unique // Pix
+  chargeId String? @unique // Cobranças (cartão/boleto)
+
+  checkoutUrl String? // link do boleto
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([status])
 }
 
 model Category {
@@ -49,6 +124,7 @@ model Movie {
   favorites     Favorite[]
   watchProgress WatchProgress[]
   analytics     MovieAnalytics[]
+  guestTokens   GuestToken[]
 }
 
 model MovieCategory {

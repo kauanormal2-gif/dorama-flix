@@ -36,12 +36,13 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
   // Upload states
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [videoUploadProgress, setVideoUploadProgress] = useState("");
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [thumbnailMode, setThumbnailMode] = useState<"upload" | "url">("upload");
-  const [videoMode, setVideoMode] = useState<"upload" | "drive">("drive");
+  const [videoMode, setVideoMode] = useState<"upload" | "url" | "drive">("upload");
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
 
   const [form, setForm] = useState({
     title: movie?.title || "",
@@ -83,17 +84,56 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
     }, 500);
   };
 
-  // Detect if existing movie has Drive URL
+  // Detect video mode from existing URL
   useEffect(() => {
     if (movie?.videoUrl?.includes("drive.google.com")) {
       setVideoMode("drive");
     } else if (movie?.videoUrl) {
-      setVideoMode("upload");
+      setVideoMode("url");
     }
     if (movie?.thumbnail) {
       setThumbnailMode("url");
     }
   }, [movie]);
+
+  const handleVideoUpload = async (file: File) => {
+    setUploadingVideo(true);
+    setVideoUploadProgress(0);
+    setError("");
+    try {
+      // 1. Pede URL assinada ao servidor
+      const res = await fetch("/api/admin/upload-r2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+      });
+      const { signedUrl, publicUrl } = await res.json();
+      if (!signedUrl) throw new Error("Erro ao obter URL de upload");
+
+      // 2. Faz upload direto pro R2 com progresso
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setVideoUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => (xhr.status === 200 ? resolve() : reject(new Error("Erro no upload")));
+        xhr.onerror = () => reject(new Error("Erro de rede"));
+        xhr.open("PUT", signedUrl);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.send(file);
+      });
+
+      setForm((prev) => ({ ...prev, videoUrl: publicUrl }));
+      setVideoMode("url");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao fazer upload do vídeo");
+    } finally {
+      setUploadingVideo(false);
+      setVideoUploadProgress(0);
+    }
+  };
 
   const uploadFile = async (file: File): Promise<string | null> => {
     const fd = new FormData();
@@ -120,22 +160,6 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
     }
   };
 
-  const handleVideoUpload = async (file: File) => {
-    setUploadingVideo(true);
-    setError("");
-    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-    setVideoUploadProgress(`Enviando vídeo (${sizeMB} MB)...`);
-    try {
-      const url = await uploadFile(file);
-      if (url) setForm((prev) => ({ ...prev, videoUrl: url }));
-    } catch {
-      setError("Erro ao fazer upload do vídeo.");
-    } finally {
-      setUploadingVideo(false);
-      setVideoUploadProgress("");
-    }
-  };
-
   // Convert Drive share link to embed URL
   function toDriveEmbed(url: string): string {
     const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -155,7 +179,7 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
     setSaving(true);
 
     try {
-      // Auto-convert Drive links to embed
+      // Auto-convert Drive links to embed (legado)
       const videoUrl =
         videoMode === "drive" ? toDriveEmbed(form.videoUrl) : form.videoUrl;
 
@@ -358,108 +382,71 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
         {/* ── VÍDEO ── */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-gray-400 font-medium">
-              Vídeo *
-            </label>
+            <label className="text-sm text-gray-400 font-medium">Vídeo *</label>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setVideoMode("upload")}
-                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${
-                  videoMode === "upload"
-                    ? "bg-primary text-white"
-                    : "bg-white/10 text-gray-400 hover:bg-white/20"
-                }`}
-              >
-                <FileVideo size={12} />
-                Upload MP4
+              <button type="button" onClick={() => setVideoMode("upload")}
+                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${videoMode === "upload" ? "bg-primary text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"}`}>
+                <FileVideo size={12} /> Upload
               </button>
-              <button
-                type="button"
-                onClick={() => setVideoMode("drive")}
-                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${
-                  videoMode === "drive"
-                    ? "bg-primary text-white"
-                    : "bg-white/10 text-gray-400 hover:bg-white/20"
-                }`}
-              >
-                <Film size={12} />
-                Link do Drive
+              <button type="button" onClick={() => setVideoMode("url")}
+                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${videoMode === "url" ? "bg-primary text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"}`}>
+                <Film size={12} /> URL
+              </button>
+              <button type="button" onClick={() => setVideoMode("drive")}
+                className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition ${videoMode === "drive" ? "bg-primary text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"}`}>
+                <Film size={12} /> Drive
               </button>
             </div>
           </div>
 
           {videoMode === "upload" ? (
             <div
-              onClick={() =>
-                !uploadingVideo && videoInputRef.current?.click()
-              }
+              onClick={() => !uploadingVideo && videoInputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files[0];
-                if (file) handleVideoUpload(file);
-              }}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleVideoUpload(f); }}
               className="w-full bg-dark-card border-2 border-dashed border-dark-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
             >
               {uploadingVideo ? (
                 <div>
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-yellow-400 text-sm">
-                    {videoUploadProgress || "Enviando vídeo..."}
-                  </p>
-                  <p className="text-gray-600 text-xs mt-1">
-                    Isso pode levar alguns minutos dependendo do tamanho
-                  </p>
+                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-yellow-400 text-sm mb-2">Enviando para Cloudflare R2...</p>
+                  <div className="w-full max-w-xs mx-auto bg-white/10 rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }} />
+                  </div>
+                  <p className="text-gray-500 text-xs mt-1">{videoUploadProgress}%</p>
                 </div>
               ) : form.videoUrl && !form.videoUrl.includes("drive.google.com") ? (
                 <div>
                   <FileVideo size={32} className="mx-auto mb-2 text-green-400" />
-                  <p className="text-green-400 text-sm mb-1">
-                    Vídeo carregado!
-                  </p>
+                  <p className="text-green-400 text-sm mb-1">Vídeo no R2 ✓</p>
                   <p className="text-gray-500 text-xs">Clique para trocar</p>
                 </div>
               ) : (
                 <>
                   <FileVideo size={32} className="mx-auto mb-2 text-gray-500" />
-                  <p className="text-gray-400 text-sm">
-                    Clique ou arraste o vídeo aqui
-                  </p>
-                  <p className="text-gray-600 text-xs mt-1">MP4</p>
+                  <p className="text-gray-400 text-sm">Clique ou arraste o vídeo aqui</p>
+                  <p className="text-gray-600 text-xs mt-1">MP4 — vai direto pro Cloudflare R2</p>
                 </>
               )}
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/mp4,video/webm"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleVideoUpload(file);
-                }}
-              />
+              <input ref={videoInputRef} type="file" accept="video/mp4,video/webm" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); }} />
             </div>
+          ) : videoMode === "url" ? (
+            <>
+              <input type="url" value={form.videoUrl}
+                onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+                required placeholder="https://pub-xxx.r2.dev/videos/serie.mp4"
+                className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition" />
+              <p className="text-gray-600 text-xs mt-1">Cole a URL pública do Cloudflare R2</p>
+            </>
           ) : (
             <>
-              <input
-                type="url"
-                value={form.videoUrl}
-                onChange={(e) =>
-                  setForm({ ...form, videoUrl: e.target.value })
-                }
-                required
-                placeholder="https://drive.google.com/file/d/.../view"
-                className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition"
-              />
-              {isDriveLink && (
-                <p className="text-green-400 text-xs mt-1">
-                  Link do Drive detectado — será convertido para embed automaticamente
-                </p>
-              )}
-              <p className="text-gray-600 text-xs mt-1">
-                Cole o link de compartilhamento do Google Drive
-              </p>
+              <input type="url" value={form.videoUrl}
+                onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+                required placeholder="https://drive.google.com/file/d/.../view"
+                className="w-full bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition" />
+              {isDriveLink && <p className="text-green-400 text-xs mt-1">Link do Drive detectado ✓</p>}
+              <p className="text-gray-600 text-xs mt-1">Cole o link do Google Drive (séries antigas)</p>
             </>
           )}
         </div>
@@ -572,7 +559,7 @@ export default function MovieForm({ movie }: { movie?: MovieData }) {
         {/* Submit */}
         <button
           type="submit"
-          disabled={saving || uploadingImage || uploadingVideo}
+          disabled={saving || uploadingImage}
           className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 px-6 py-3 rounded-lg font-semibold transition"
         >
           <Save size={16} />

@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { requireEquipe } from "@/lib/equipe-server";
 import { slugify } from "@/lib/utils";
+import { enviarPush } from "@/lib/push-server";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireEquipe();
   } catch {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
@@ -57,6 +59,23 @@ export async function POST(request: Request) {
       },
       include: { categories: { include: { category: true } } },
     });
+
+    // Avisa quem autorizou notificação que tem série nova no ar. Rascunho e
+    // inativo não avisam, porque ninguém consegue assistir ainda. Se o envio
+    // falhar, o cadastro continua valendo — só não sai o aviso.
+    if (movie.status === "active") {
+      try {
+        await enviarPush({
+          title: "Nova série no Drama Flix",
+          body: `${movie.title} já está disponível. Vem assistir!`,
+          url: `/filme/${movie.slug}`,
+          image: movie.thumbnail,
+          tag: `serie-${movie.slug}`,
+        });
+      } catch {
+        // não bloqueia o cadastro
+      }
+    }
 
     return NextResponse.json({ movie }, { status: 201 });
   } catch {

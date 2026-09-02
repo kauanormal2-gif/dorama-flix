@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   description:
     "Assista aos melhores filmes e séries asiáticas. Histórias de amor, dramas emocionantes e muito mais!",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -33,7 +41,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${poppins.variable} h-full`}>
       <head>
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#E50914" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>

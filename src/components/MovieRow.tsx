@@ -51,29 +51,41 @@ export default function MovieRow({ title, movies, showProgress, dimmed }: MovieR
   if (movies.length === 0) return null;
 
   return (
-    <section className="mb-8">
-      <h2 className="text-lg md:text-xl font-bold mb-4 px-4 md:px-0">
-        {title}
-      </h2>
-      <div className="relative group">
+    <section className="mb-12">
+      <div className="flex items-center gap-3 mb-5 px-4 md:px-6">
+        <span className="h-6 w-1 bg-primary rounded-full" />
+        <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+          {title}
+        </h2>
+        <span className="text-xs text-gray-500 font-medium">
+          {movies.length}
+        </span>
+      </div>
+      <div className="relative group/row">
         {/* Scroll buttons */}
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-0 bottom-8 z-10 w-10 bg-gradient-to-r from-dark to-transparent opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+          aria-label="Rolar esquerda"
+          className="hidden md:flex absolute left-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-r from-dark via-dark/80 to-transparent opacity-0 group-hover/row:opacity-100 transition items-center justify-start pl-2"
         >
-          <ChevronLeft size={24} />
+          <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition">
+            <ChevronLeft size={20} />
+          </div>
         </button>
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-0 bottom-8 z-10 w-10 bg-gradient-to-l from-dark to-transparent opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+          aria-label="Rolar direita"
+          className="hidden md:flex absolute right-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-l from-dark via-dark/80 to-transparent opacity-0 group-hover/row:opacity-100 transition items-center justify-end pr-2"
         >
-          <ChevronRight size={24} />
+          <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition">
+            <ChevronRight size={20} />
+          </div>
         </button>
 
         {/* Movie list */}
         <div
           ref={scrollRef}
-          className={`flex gap-3 overflow-x-auto scrollbar-hide px-4 md:px-0 pb-2 ${dimmed ? "opacity-60" : ""}`}
+          className={`flex gap-4 overflow-x-auto scrollbar-hide px-4 md:px-6 pb-3 pt-1 ${dimmed ? "opacity-60" : ""}`}
           style={{ scrollbarWidth: "none" }}
         >
           {movies.map((movie) => (

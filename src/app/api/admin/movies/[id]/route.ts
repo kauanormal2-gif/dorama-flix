@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
+import { enviarPush } from "@/lib/push-server";
 
 export async function PUT(
   request: Request,
@@ -18,6 +19,12 @@ export async function PUT(
   try {
     const body = await request.json();
     const { title, description, thumbnail, videoUrl, bannerUrl, year, duration, rating, featured, status, categoryIds } = body;
+
+    // Como era antes de mexer — precisamos saber se ela estava em rascunho.
+    const antes = await prisma.movie.findUnique({
+      where: { id },
+      select: { status: true },
+    });
 
     // Delete old category relations
     await prisma.movieCategory.deleteMany({ where: { movieId: id } });
@@ -42,6 +49,22 @@ export async function PUT(
       },
       include: { categories: { include: { category: true } } },
     });
+
+    // Série que sai do rascunho é série nova pra quem assiste — avisa igual ao
+    // cadastro. Sem isto, tudo que ela publicava depois entrava em silêncio.
+    if (antes && antes.status !== "active" && movie.status === "active") {
+      try {
+        await enviarPush({
+          title: "Nova série no Drama Flix",
+          body: `${movie.title} já está disponível. Vem assistir!`,
+          url: `/filme/${movie.slug}`,
+          image: movie.thumbnail,
+          tag: `serie-${movie.slug}`,
+        });
+      } catch {
+        // não bloqueia a edição
+      }
+    }
 
     return NextResponse.json({ movie });
   } catch {

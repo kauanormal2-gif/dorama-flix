@@ -5,6 +5,7 @@ import { Film, Users, Eye, Heart } from "lucide-react";
 
 interface Stats {
   totalMovies: number;
+  draftMovies: number;
   totalUsers: number;
   totalViews: number;
   totalFavorites: number;
@@ -31,7 +32,13 @@ export default function AdminDashboard() {
   }, []);
 
   const statCards = [
-    { label: "Filmes", value: stats?.totalMovies || 0, icon: Film, color: "text-primary" },
+    {
+      label: "Séries no ar",
+      value: stats?.totalMovies || 0,
+      icon: Film,
+      color: "text-primary",
+      nota: stats?.draftMovies ? `+ ${stats.draftMovies} em rascunho` : undefined,
+    },
     { label: "Usuários", value: stats?.totalUsers || 0, icon: Users, color: "text-blue-400" },
     { label: "Visualizações", value: stats?.totalViews || 0, icon: Eye, color: "text-green-400" },
     { label: "Favoritos", value: stats?.totalFavorites || 0, icon: Heart, color: "text-pink-400" },
@@ -55,6 +62,9 @@ export default function AdminDashboard() {
               <card.icon size={18} className={card.color} />
             </div>
             <p className="text-3xl font-bold">{card.value}</p>
+            {card.nota && (
+              <p className="text-xs text-gray-500 mt-1">{card.nota}</p>
+            )}
           </div>
         ))}
       </div>

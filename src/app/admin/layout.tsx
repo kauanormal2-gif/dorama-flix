@@ -13,13 +13,26 @@ import {
   Menu,
   X,
   ChevronLeft,
+  Link2,
+  Bell,
+  UploadCloud,
+  Image as ImageIcon,
+  DollarSign,
+  UserCog,
 } from "lucide-react";
+import { ehDaEquipe, podeAbrir } from "@/lib/equipe";
 
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/faturamento", label: "Faturamento", icon: DollarSign },
   { href: "/admin/movies", label: "Filmes", icon: Film },
+  { href: "/admin/importar", label: "Importar em massa", icon: UploadCloud },
+  { href: "/admin/bulk-images", label: "Atualizar Capas", icon: ImageIcon },
   { href: "/admin/categories", label: "Categorias", icon: Tags },
   { href: "/admin/users", label: "Usuários", icon: Users },
+  { href: "/admin/colaboradores", label: "Colaboradores", icon: UserCog },
+  { href: "/admin/guest-tokens", label: "Links Convidado", icon: Link2 },
+  { href: "/admin/notifications", label: "Notificações", icon: Bell },
   { href: "/admin/settings", label: "Configurações", icon: Settings },
 ];
 
@@ -29,27 +42,38 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [papel, setPapel] = useState<string | null>(null);
+  const authorized = papel === null ? null : true;
   const pathname = usePathname();
   const router = useRouter();
 
+  // A própria tela de login do admin não passa pelo portão (senão vira loop)
+  const isLoginPage = pathname === "/admin/login";
+
   useEffect(() => {
+    if (isLoginPage) return;
+
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => {
-        if (!d.user || d.user.role !== "admin") {
-          router.push("/login");
+        // Colaborador entra no painel, mas só nas páginas que pode abrir.
+        if (!d.user || !ehDaEquipe(d.user.role)) {
+          router.push("/admin/login");
+        } else if (!podeAbrir(pathname, d.user.role)) {
+          router.push("/admin");
         } else {
-          setAuthorized(true);
+          setPapel(d.user.role);
         }
       })
-      .catch(() => router.push("/login"));
-  }, [router]);
+      .catch(() => router.push("/admin/login"));
+  }, [router, isLoginPage, pathname]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   };
+
+  if (isLoginPage) return <>{children}</>;
 
   if (authorized === null) {
     return (
@@ -71,7 +95,7 @@ export default function AdminLayout({
           {/* Logo */}
           <div className="p-5 border-b border-dark-border flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-1">
-              <span className="text-xl font-extrabold text-primary">DORAMA</span>
+              <span className="text-xl font-extrabold text-primary">DRAMA</span>
               <span className="text-xl font-light">FLIX</span>
             </Link>
             <button
@@ -84,7 +108,9 @@ export default function AdminLayout({
 
           {/* Links */}
           <nav className="flex-1 p-4 space-y-1">
-            {sidebarLinks.map((link) => {
+            {sidebarLinks
+              .filter((link) => podeAbrir(link.href, papel ?? undefined))
+              .map((link) => {
               const isActive =
                 pathname === link.href ||
                 (link.href !== "/admin" && pathname.startsWith(link.href));
@@ -135,7 +161,9 @@ export default function AdminLayout({
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* `min-w-0`: sem isso a tabela larga de usuários empurra este bloco pra
+          além da tela e o painel inteiro fica rolando de lado no celular. */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-dark/80 backdrop-blur-sm border-b border-dark-border px-4 py-3 flex items-center gap-4">
           <button

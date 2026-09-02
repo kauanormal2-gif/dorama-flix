@@ -1,9 +1,25 @@
-import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+  },
+});
+
+const MAX_BYTES = 8 * 1024 * 1024;
+
+const ALLOWED_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 
 export async function POST(request: Request) {
-  // Check admin auth
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -17,23 +33,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (!token) {
+    // SVG fica de fora de propósito: ele pode carregar script e virar XSS,
+    // já que o bucket é servido em domínio público.
+    const extension = ALLOWED_TYPES[file.type];
+    if (!extension) {
       return NextResponse.json(
-        { error: "BLOB_READ_WRITE_TOKEN não configurado. Vá em Vercel → Storage → conecte o Blob ao projeto." },
-        { status: 500 }
+        { error: "Formato não aceito. Envie JPG, PNG ou WEBP." },
+        { status: 400 }
       );
     }
 
-    const blob = await put(file.name, file, {
-      access: "public",
-      token,
-    });
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json(
+        { error: "Imagem muito grande. O limite é 8 MB." },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({ url: blob.url });
+    const safeName = file.name
+      .toLowerCase()
+      .replace(/\.[^.]*$/, "")
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-_]/g, "")
+      .slice(0, 60);
+
+    const key = `images/${Date.now()}-${safeName || "imagem"}.${extension}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    await r2.send(
+      new PutObjectCommand({
+        Bucket: process.env.CLOUDFLARE_R2_BUCKET!,
+        Key: key,
+        Body: buffer,
+        ContentType: file.type,
+      })
+    );
+
+    const url = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+    return NextResponse.json({ url });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Erro desconhecido";
-    console.error("Upload error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Upload error:", err);
+    return NextResponse.json(
+      { error: "Não foi possível enviar a imagem." },
+      { status: 500 }
+    );
   }
 }

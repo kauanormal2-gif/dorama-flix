@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireEquipe } from "@/lib/equipe-server";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireEquipe();
   } catch {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
@@ -16,7 +16,21 @@ export async function GET() {
       email: true,
       role: true,
       createdAt: true,
+      lastLoginAt: true,
+      subscriptionStatus: true,
+      subscriptionExpiresAt: true,
       _count: { select: { favorites: true, watchProgress: true } },
+      // Última série que a pessoa assistiu — é isso que diz se ela usa o app
+      watchProgress: {
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+        select: {
+          updatedAt: true,
+          progress: true,
+          completed: true,
+          movie: { select: { title: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
