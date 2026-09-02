@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "drama-flix",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-02",
+  // nodejs_compat é obrigatório: o app usa Prisma/pg, bcrypt e web-push,
+  // que dependem de APIs do Node.
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true }
+}

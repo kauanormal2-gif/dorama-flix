@@ -43,6 +43,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
+    // Na Cloudflare o otimizador arrasta ~1,4 MB de WebAssembly e estoura o
+    // limite de tamanho do Worker. As capas já vêm prontas do R2, então servir
+    // direto é o caminho lá. Fora da Cloudflare o otimizador continua ligado.
+    unoptimized: process.env.CLOUDFLARE_BUILD === "1",
     // Pôsteres são PNG de ~1.4MB. O otimizador converte pra AVIF/WebP no
     // tamanho real do card (150px no Android), derrubando ~98% do peso.
     formats: ["image/avif", "image/webp"],

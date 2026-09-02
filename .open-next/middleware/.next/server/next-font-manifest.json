@@ -1,0 +1,168 @@
+{
+  "app": {
+    "[project]/src/app/(public)/assinar/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/buscar/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/favoritos/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/filme/[slug]/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/historico/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/login/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/(public)/perfil/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/_not-found/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/bulk-images/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/categories/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/colaboradores/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/faturamento/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/guest-tokens/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/importar/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/login/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/movies/[id]/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/movies/new/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/movies/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/notifications/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/settings/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ],
+    "[project]/src/app/admin/users/page": [
+      "static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2",
+      "static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "static/media/829ba4228c966254-s.p.2mm3nq9i83l-m.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}
