@@ -1,3 +1,5 @@
+import { signValue, unsignValue } from "./tokens";
+
 /**
  * Configuração central de cookies — todos os cookies do app devem usar
  * esses defaults pra garantir consistência de segurança.
@@ -49,20 +51,61 @@ export const GUEST_COOKIE = "guest_token";
  */
 export const MAX_CONVITES = 20;
 
-/** Lê a lista de convites do cookie. Aceita o formato antigo (um token só). */
-export function lerConvites(valor: string | undefined): string[] {
+/**
+ * Um convite guardado no navegador da pessoa.
+ *
+ * `fim` só existe nos links de prazo rolante (o mesmo link vale pra todo
+ * mundo e cada um ganha os dias a partir da SUA abertura). Nos links antigos
+ * o prazo é a data fixa que está no banco, e aqui vem vazio.
+ */
+export interface ConviteGuardado {
+  token: string;
+  fim?: number;
+}
+
+/**
+ * Lê os convites do cookie.
+ *
+ * O valor é assinado pra ninguém esticar o próprio prazo editando o cookie.
+ * Formato antigo (lista crua, sem assinatura) continua sendo aceito — senão
+ * quem já tinha convite perderia o acesso na hora que isto subisse.
+ */
+export function lerConvites(valor: string | undefined): ConviteGuardado[] {
   if (!valor) return [];
-  // Dependendo de quem lê, a vírgula pode chegar codificada como %2C.
-  return valor
+
+  const cru = unsignValue(valor) ?? valor;
+
+  return cru
     .replace(/%2C/gi, ",")
     .split(",")
-    .map((t) => t.trim())
+    .map((parte) => parte.trim())
     .filter(Boolean)
+    .map((parte) => {
+      const [token, fim] = parte.split("~");
+      const prazo = Number(fim);
+      return token && !isNaN(prazo) && prazo > 0
+        ? { token, fim: prazo }
+        : { token };
+    })
+    .filter((c) => c.token)
     .slice(0, MAX_CONVITES);
 }
 
-/** Junta o convite novo aos que já existiam, sem repetir. O novo vem primeiro. */
-export function juntarConvites(atual: string | undefined, novo: string) {
-  const lista = [novo, ...lerConvites(atual).filter((t) => t !== novo)];
-  return lista.slice(0, MAX_CONVITES).join(",");
+/**
+ * Junta o convite novo aos que já existiam, sem repetir. O novo vem primeiro.
+ *
+ * `fimEmMs` é o instante em que o acesso DESTA pessoa acaba (links de prazo
+ * rolante). Sem ele, quem manda no prazo é a data do banco.
+ */
+export function juntarConvites(
+  atual: string | undefined,
+  novo: string,
+  fimEmMs?: number
+) {
+  const entrada = fimEmMs ? `${novo}~${fimEmMs}` : novo;
+  const resto = lerConvites(atual)
+    .filter((c) => c.token !== novo)
+    .map((c) => (c.fim ? `${c.token}~${c.fim}` : c.token));
+
+  return signValue([entrada, ...resto].slice(0, MAX_CONVITES).join(","));
 }

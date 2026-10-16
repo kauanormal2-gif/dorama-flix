@@ -61,8 +61,12 @@ model GuestToken {
   token        String   @unique
   label        String
   durationDays Int      @default(30) // 14 ou 30
-  /// Vazio = nunca vence. Usado pelos links fixos de divulgação de série.
+  /// Vazio = o LINK nunca vence. Usado pelos links fixos de divulgação.
   expiresAt    DateTime?
+  /// Quando preenchido, o link é de prazo rolante: ele nunca vence e CADA
+  /// pessoa que abrir ganha esta quantidade de dias contada da abertura dela.
+  /// É o que permite mandar o mesmo link pra todo mundo.
+  diasDeAcesso Int?
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   /// Quando preenchido, o convite libera só essa série. Vazio = catálogo todo.

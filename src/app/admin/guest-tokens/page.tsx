@@ -9,6 +9,7 @@ interface GuestToken {
   label: string;
   durationDays: number;
   expiresAt: string | null;
+  diasDeAcesso: number | null;
   active: boolean;
   createdAt: string;
   movieId: string | null;
@@ -21,7 +22,7 @@ interface SerieOpcao {
 }
 
 // Precisa bater com a lista aceita em /api/admin/guest-tokens
-const DURACOES = [3, 7, 14, 30];
+const DURACOES = [3, 7, 14, 30, 90, 365];
 
 export default function GuestTokensPage() {
   const [tokens, setTokens] = useState<GuestToken[]>([]);
@@ -34,6 +35,7 @@ export default function GuestTokensPage() {
   const [series, setSeries] = useState<SerieOpcao[]>([]);
   const [movieId, setMovieId] = useState("");
   const [erro, setErro] = useState("");
+  const [prazoRolante, setPrazoRolante] = useState(false);
 
   const appUrl =
     typeof window !== "undefined"
@@ -76,7 +78,12 @@ export default function GuestTokensPage() {
     const res = await fetch("/api/admin/guest-tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label, durationDays, movieId: movieId || null }),
+      body: JSON.stringify({
+        label,
+        durationDays,
+        movieId: movieId || null,
+        prazoRolante,
+      }),
     });
     if (res.ok) {
       setLabel("");
@@ -170,8 +177,27 @@ export default function GuestTokensPage() {
               </p>
             </div>
             <div>
+              <label className="flex items-start gap-3 bg-dark border border-dark-border rounded-lg p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={prazoRolante}
+                  onChange={(e) => setPrazoRolante(e.target.checked)}
+                  className="mt-1 w-5 h-5 accent-primary flex-shrink-0"
+                />
+                <span>
+                  <span className="block text-base font-semibold text-white">
+                    Mandar pra quantas pessoas eu quiser
+                  </span>
+                  <span className="block text-sm text-gray-400 mt-0.5">
+                    O link nunca vence. Cada pessoa que abrir ganha o prazo
+                    abaixo contado a partir do dia dela.
+                  </span>
+                </span>
+              </label>
+            </div>
+            <div>
               <label className="text-sm text-gray-400 block mb-2">
-                Duração do acesso
+                {prazoRolante ? "Quanto tempo cada pessoa ganha" : "Duração do acesso"}
               </label>
               <div className="flex gap-3">
                 {DURACOES.map((d) => (
@@ -185,7 +211,7 @@ export default function GuestTokensPage() {
                         : "bg-dark border border-dark-border text-gray-400 hover:border-primary/50"
                     }`}
                   >
-                    {d} dias
+                    {d === 365 ? "1 ano" : d === 90 ? "3 meses" : d === 30 ? "1 mês" : `${d} dias`}
                   </button>
                 ))}
               </div>
@@ -247,9 +273,11 @@ export default function GuestTokensPage() {
                         )}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {t.expiresAt
-                          ? `${t.durationDays} dias · Expira em ${new Date(t.expiresAt).toLocaleDateString("pt-BR")}`
-                          : "Link fixo · não vence"}
+                        {t.diasDeAcesso
+                          ? `${t.diasDeAcesso} dias por pessoa · vale pra quantas quiser`
+                          : t.expiresAt
+                            ? `${t.durationDays} dias · Expira em ${new Date(t.expiresAt).toLocaleDateString("pt-BR")}`
+                            : "Link fixo · não vence"}
                       </p>
                       <p className="text-xs text-gray-600 font-mono truncate mt-0.5">
                         {appUrl}/convite/{t.token}

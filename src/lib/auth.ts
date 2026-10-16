@@ -71,19 +71,25 @@ export async function validateGuestToken(
   token: string,
   movieId?: string
 ): Promise<boolean> {
-  // O cookie guarda VÁRIOS convites separados por vírgula: a cliente recebe um
-  // link por série. Basta um deles liberar a série pedida.
-  const tokens = lerConvites(token);
-  if (!tokens.length) return false;
+  // O cookie guarda VÁRIOS convites: a cliente pode ter recebido um link por
+  // série. Basta um deles liberar a série pedida.
+  const guardados = lerConvites(token);
+  if (!guardados.length) return false;
 
   const convites = await prisma.guestToken.findMany({
-    where: { token: { in: tokens }, active: true },
+    where: { token: { in: guardados.map((c) => c.token) }, active: true },
   });
 
-  const agora = new Date();
+  const agora = Date.now();
   return convites.some((c) => {
-    // Sem data = link fixo de divulgação, nunca vence.
-    if (c.expiresAt && new Date(c.expiresAt) <= agora) return false;
+    // Prazo do LINK (data fixa no banco). Vazio = o link nunca vence.
+    if (c.expiresAt && new Date(c.expiresAt).getTime() <= agora) return false;
+
+    // Prazo DESTA pessoa, gravado no cookie quando ela abriu o link. É o que
+    // faz um link só servir pra todo mundo, cada um com a própria contagem.
+    const meu = guardados.find((g) => g.token === c.token);
+    if (c.diasDeAcesso && (!meu?.fim || meu.fim <= agora)) return false;
+
     if (c.movieId && c.movieId !== movieId) return false;
     return true;
   });

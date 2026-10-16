@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { randomUUID } from "crypto";
 
 // Arquivos de rota só podem exportar os handlers, então a lista fica local.
-const DURACOES = [3, 7, 14, 30];
+const DURACOES = [3, 7, 14, 30, 90, 365];
 
 export async function GET() {
   try {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { label, durationDays, movieId } = await req.json();
+  const { label, durationDays, movieId, prazoRolante } = await req.json();
 
   if (!label || !durationDays) {
     return NextResponse.json({ error: "label e durationDays são obrigatórios" }, { status: 400 });
@@ -60,11 +60,22 @@ export async function POST(req: NextRequest) {
   }
 
   const token = randomUUID().replace(/-/g, "");
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + days);
+
+  // Prazo rolante: o LINK não vence (expiresAt vazio) e cada pessoa que abrir
+  // ganha `days` dias contados da abertura dela. É o que permite mandar o
+  // mesmo link pra quantas pessoas quiser.
+  const rolante = Boolean(prazoRolante);
+  const expiresAt = rolante ? null : new Date(Date.now() + days * 86400000);
 
   const guestToken = await prisma.guestToken.create({
-    data: { token, label, durationDays: days, expiresAt, movieId: serieId },
+    data: {
+      token,
+      label,
+      durationDays: days,
+      expiresAt,
+      diasDeAcesso: rolante ? days : null,
+      movieId: serieId,
+    },
     include: { movie: { select: { title: true, slug: true } } },
   });
 

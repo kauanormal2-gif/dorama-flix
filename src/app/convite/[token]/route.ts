@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import {
   GUEST_COOKIE,
   juntarConvites,
+  lerConvites,
   SECURE_COOKIE_DEFAULTS,
   TRIAL_COOKIE,
   TRIAL_COOKIE_MAX_AGE,
@@ -41,15 +42,30 @@ export async function GET(
 
   const response = NextResponse.redirect(new URL(destino, baseUrl));
 
+  // Link de prazo rolante: o MESMO link serve pra todo mundo e cada pessoa
+  // ganha os dias contados da abertura dela. O prazo vai no cookie (assinado),
+  // porque não existe cadastro de quem abriu.
+  //
+  // Quem já tem acesso não volta pro começo: reabrir o link não encurta nem
+  // estica — mantemos o prazo que ela já tinha.
+  const jaTinha = lerConvites(req.cookies.get(GUEST_COOKIE)?.value).find(
+    (c) => c.token === token
+  );
+  const fimDesta = guest.diasDeAcesso
+    ? jaTinha?.fim && jaTinha.fim > Date.now()
+      ? jaTinha.fim
+      : Date.now() + guest.diasDeAcesso * 86400000
+    : undefined;
+
   // SOMA o convite aos que ela já tinha, em vez de trocar. Trocando, abrir o
   // link da segunda série derrubava o acesso à primeira.
   //
-  // O cookie sempre vale um ano: quem manda no acesso é o banco, então um
-  // convite com prazo continua vencendo na data certa, e revogar o link corta
-  // o acesso mesmo com o cookie no lugar.
+  // O cookie sempre vale um ano: quem manda no acesso é o banco (e, nos links
+  // rolantes, o prazo assinado aqui dentro), então revogar o link corta o
+  // acesso mesmo com o cookie no lugar.
   response.cookies.set(
     GUEST_COOKIE,
-    juntarConvites(req.cookies.get(GUEST_COOKIE)?.value, token),
+    juntarConvites(req.cookies.get(GUEST_COOKIE)?.value, token, fimDesta),
     { ...SECURE_COOKIE_DEFAULTS, maxAge: TRIAL_COOKIE_MAX_AGE }
   );
 
